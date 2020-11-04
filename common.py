@@ -7,7 +7,9 @@
 
 import time
 import json
+from functools import wraps
 import hashlib
+import requests
 from requests.compat import urljoin
 import pymysql
 import tldextract
@@ -25,6 +27,24 @@ def current_time():
     date = datetime.datetime.strptime(cur_time, '%Y-%m-%d %H:%M:%S')
     print("[+] 获取完成")
     return date
+
+
+def execute_time(fn):
+    """
+    修饰器，用于记录函数执行时长
+    用法 @stat_time
+    :param fn:
+    :return:
+    """
+    @wraps(fn)
+    def wrap(*args, **kw):
+        start_time = time.time()
+        ret = fn(*args, **kw)
+        ended_time = time.time()
+        print("call {}() cost: {} seconds".format(fn.__name__, ended_time - start_time))
+        return ret
+
+    return wrap
 
 
 def filter_punctuation(input_str):
@@ -116,6 +136,45 @@ def is_ip(_str):
         return True
     else:
         return False
+
+
+def get_encoding(res):
+    encoding = 'utf-8'
+    if res.encoding == 'ISO-8859-1':
+        encodings = requests.utils.get_encodings_from_content(res.text)
+        if encodings:
+            encoding = encodings[0]
+        else:
+            encoding = res.apparent_encoding
+    return encoding
+
+
+def get_str_btw(s, front, back):
+    """
+    获取两个字符串中间的子串
+    :param s:
+    :param front:
+    :param back:
+    :return:
+    """
+    par = s.partition(front)
+    return (par[2].partition(back))[0][:]
+
+
+def lowercase_capital_number():
+    lowercase_str_list = [chr(i) for i in range(97, 123)]   # 小写字母a-z
+    capital_str_list = [chr(i) for i in range(65, 91)]  # 大写字母A-Z
+    number_str_list = [str(i) for i in range(0, 10)]    # 数字字符0-9
+
+
+def is_need_restart(self):
+    if time.time() - _start_time > run_time:
+        python = sys.executable
+        print('重启')
+        try:
+            os.execl(python, python, *[sys.argv[0]])
+        except:
+            os.execl(python, python, *['google_searcher.exe'])
 
 
 if __name__ == '__main__':
